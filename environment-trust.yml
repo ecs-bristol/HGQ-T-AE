@@ -2,18 +2,19 @@ name: jedi-linear-trust
 channels:
   - conda-forge
 dependencies:
-  - 'python=3.13.*'
+  - 'python=3.11.*'
+  - git
   - pip
   - verilator
   - pip:
-    - da4ml < 0.5
-    - h5py
-    - git+https://github.com/ecs-bristol/HGQ2.git@hgq-ece
-    - jax[cuda12]
-    - keras
-    - matplotlib
-    - mplhep
-    - numpy
-    - omegaconf
-    - pyyaml
-    - tqdm
+    - git+https://github.com/calad0i/da4ml.git@da44fba80597f1653a99b686e6dc813841cdd277
+    - git+https://github.com/ecs-bristol/HGQ2.git@5a01075c5881f3dd5d133cfb24ae2e834efa6171
+    - h5py==3.14.0
+    - jax[cuda12]==0.6.2
+    - keras==3.11.3
+    - matplotlib==3.10.3
+    - mplhep==0.4.0
+    - numpy==2.2.6
+    - omegaconf==2.3.1
+    - pyyaml==6.0.2
+    - tqdm==4.67.1

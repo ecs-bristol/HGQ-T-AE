@@ -79,7 +79,6 @@ def syn_test_verilog(save_path: Path, X, Y, N=None, softmax=False):
             model, solver_options={"hard_dc": 2}, hwconf=HWConfig(1, -1, -1)
         )
         solution = comb_trace(inp, out)
-        solution.save_binary("/tmp/emulator.bin")  # <- This file
         verilog_model = VerilogModel(
             solution,
             prj_name="jet_classifier_large",
@@ -89,7 +88,7 @@ def syn_test_verilog(save_path: Path, X, Y, N=None, softmax=False):
             clock_uncertainty=0.0,
             latency_cutoff=2,
         )
-        verilog_model.compile(nproc=8)  # Verilator and OpenMP binding
+        verilog_model.compile()  # Verilator and OpenMP binding
         try:
             verilog_model._load_lib()
         except Exception as e:

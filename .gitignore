@@ -201,3 +201,15 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# JEDI-linear reproduction inputs and generated outputs
+.tmp-hgq-ece/
+analysis/
+calibration_results/
+dataset/
+hardware_ece_da4ml/
+hardware_smoke_da4ml/
+logs/
+official_models/
+official_result_reports/
+trust_models/

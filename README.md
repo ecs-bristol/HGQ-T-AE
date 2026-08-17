@@ -15,6 +15,9 @@ conda env create -f environment-trust.yml
 conda activate jedi-linear-trust
 ```
 
+This file pins Python 3.11 and the tested HGQ2, da4ml, Keras, and JAX
+revisions used for the Trust-HGQ results.
+
 ### Download and prepare dataset
 
 ```bash
@@ -66,6 +69,24 @@ KERAS_BACKEND=jax python jet_classifier.py \
   -r train
 ```
 
+The 20 Trust-HGQ configurations used in the paper cover both model families,
+two feature counts, and five particle counts. Run each family from an activated
+`jedi-linear-trust` environment, for example:
+
+```bash
+bash scripts/run_ece_grid_perminv.sh 0 configs/ece-grid-perminv-*.yaml
+bash scripts/run_ece_grid_nonperminv.sh 1 configs/ece-grid-nonperminv-*.yaml
+```
+
+The first argument selects the GPU. The scripts derive the repository root
+from their own locations, use `python` from the active environment, and write
+temporary files below the repository. Set `PYTHON` or `HGQ_ECE_TMPDIR` to
+override those defaults:
+
+```bash
+PYTHON=/path/to/python HGQ_ECE_TMPDIR=/path/to/tmp bash scripts/run_ece_grid_perminv.sh 0 configs/ece-grid-perminv-*.yaml
+```
+
 ### Evaluation on test set, convert to Verilog
 
 The outputs are already included in the `official_models.tar.gz`, but you can validate them with:
@@ -78,8 +99,8 @@ The Verilator may require a newer C++ compiler. We tested our code with g++ 15.1
 
 ### Evaluation of calibration metrics
 
-`evaluate_calibration.py` evaluates the trained HGQ Keras models on the test set
-and reports accuracy, negative log-likelihood (NLL), and expected calibration
+`evaluate_calibration.py` evaluates trained HGQ Keras models on the test set
+and reports accuracy and expected calibration
 error (ECE). It does not run `da4ml` or generate Verilog. The script uses the
 same dataset normalization as `src/dataloader.py`: it reads
 `dataset/150c-train.h5` to compute the feature mean/std and evaluates on
@@ -109,16 +130,15 @@ calibration_results/n16_f3_non_perminv.json
 calibration_results/n16_f3_non_perminv.csv
 ```
 
-The CSV contains one row per checkpoint with fields including `acc`, `nll`,
-`ece`, `ebops`, and `load_mode`. ECE is computed from the softmax confidence
-using 15 equal-width confidence bins by default, and NLL uses the natural
-logarithm of the predicted probability for the true class.
+The CSV contains one row per checkpoint with fields including `acc`, `ece`,
+`ebops`, and `load_mode`. ECE is computed from the softmax confidence using
+15 equal-width confidence bins by default.
 
 To evaluate every config in `configs/`, omit `--configs`:
 
 ```bash
 KERAS_BACKEND=jax python evaluate_calibration.py \
-  --output calibration_results/ece_nll.json \
+  --output calibration_results/ece.json \
   --bins 15
 ```
 

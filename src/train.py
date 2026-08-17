@@ -39,7 +39,27 @@ def train_hgq(model: keras.Model, X, Y, Xs, Ys, conf):
     init_weights = _get_conf_value(conf.train, "init_weights", None)
     if init_weights:
         print(f"Loading initial weights from {init_weights}")
-        model.load_weights(init_weights)
+        try:
+            model.load_weights(init_weights)
+        except ValueError as exc:
+            message = str(exc)
+            known_legacy_quantizer_mismatch = (
+                "FixedPointQuantizerKIF" in message
+                and "i_decay_speed" in message
+                and "received 0 variables" in message
+            )
+            if not known_legacy_quantizer_mismatch:
+                raise
+            weights_path = Path(init_weights)
+            model_path = (
+                weights_path.parent.parent / "models" / weights_path.name
+            )
+            if not model_path.exists():
+                raise FileNotFoundError(
+                    f"Compatible full model not found: {model_path}"
+                ) from exc
+            print(f"Loading compatible full model from {model_path}")
+            model = keras.models.load_model(model_path, compile=False)
 
     pred = model.predict(Xs, batch_size=2048, verbose=0)  # type: ignore
     hgq_acc_1 = np.mean(np.argmax(pred, axis=1) == np.array(Ys).ravel())
@@ -141,6 +161,27 @@ def train_hgq(model: keras.Model, X, Y, Xs, Ys, conf):
     beta_sched = BetaScheduler(PieceWiseSchedule(conf.beta.intervals))
 
     callbacks = [scheduler, beta_sched, ebops, save, pbar, terminate_on_nan]
+    early_stopping_conf = _get_conf_value(conf.train, "early_stopping", None)
+    early_stopping_enabled = bool(
+        _get_conf_value(early_stopping_conf, "enabled", False)
+    )
+    if early_stopping_enabled:
+        early_stopping = keras.callbacks.EarlyStopping(
+            monitor=str(_get_conf_value(early_stopping_conf, "monitor", "val_loss")),
+            mode=str(_get_conf_value(early_stopping_conf, "mode", "min")),
+            patience=int(_get_conf_value(early_stopping_conf, "patience", 15)),
+            min_delta=float(_get_conf_value(early_stopping_conf, "min_delta", 0.0)),
+            restore_best_weights=bool(
+                _get_conf_value(early_stopping_conf, "restore_best_weights", False)
+            ),
+            verbose=1,
+        )
+        callbacks.append(early_stopping)
+        print(
+            "Early stopping enabled: "
+            f"monitor={early_stopping.monitor}, mode={early_stopping.mode}, "
+            f"patience={early_stopping.patience}, min_delta={early_stopping.min_delta}"
+        )
 
     batch_size = conf.train.bsz
 

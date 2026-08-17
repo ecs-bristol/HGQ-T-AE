@@ -70,7 +70,6 @@ def calibration_metrics(logits: np.ndarray, labels: np.ndarray, n_bins: int):
     pred = np.argmax(probs, axis=1)
     conf = np.max(probs, axis=1)
     correct = pred == labels
-    true_prob = np.clip(probs[np.arange(labels.shape[0]), labels], 1e-12, 1.0)
 
     bin_ids = np.minimum((conf * n_bins).astype(np.int64), n_bins - 1)
     ece = 0.0
@@ -105,7 +104,6 @@ def calibration_metrics(logits: np.ndarray, labels: np.ndarray, n_bins: int):
 
     return {
         "acc": float(np.mean(correct)),
-        "nll": float(-np.mean(np.log(true_prob))),
         "ece": float(ece),
         "bins": bins,
     }
@@ -125,22 +123,26 @@ def evaluate_config(conf, x_train, x_test, y_test, n_bins: int, batch_size: int)
             model.load_weights(ckpt)
         except ValueError:
             model_path = save_path / "models" / ckpt.name
-            if model_path.exists():
+            model_candidates = (
+                (model_path, "saved_model"),
+                (ckpt, "checkpoint_model"),
+            )
+            for candidate, candidate_mode in model_candidates:
+                if not candidate.exists():
+                    continue
                 try:
-                    model = keras.models.load_model(model_path)
-                    load_mode = "saved_model"
+                    model = keras.models.load_model(candidate, compile=False)
                 except Exception:
-                    load_mode = "skip_mismatch"
-                    model = get_model(conf)
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        model.load_weights(ckpt, skip_mismatch=True)
+                    continue
+                load_mode = candidate_mode
+                break
             else:
                 load_mode = "skip_mismatch"
+                model = get_model(conf)
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     model.load_weights(ckpt, skip_mismatch=True)
-        if load_mode != "saved_model":
+        if load_mode not in {"saved_model", "checkpoint_model"}:
             trace_minmax(model, x_train, batch_size=batch_size)
         logits = model.predict(x_test, batch_size=batch_size, verbose=0)
         metrics = calibration_metrics(logits, y_test, n_bins=n_bins)
@@ -180,7 +182,6 @@ def write_outputs(rows, output: Path):
         "ebops",
         "n_bins",
         "acc",
-        "nll",
         "ece",
     ]
     with csv_path.open("w", newline="") as f:
@@ -194,7 +195,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--configs", nargs="*", default=None)
     parser.add_argument("--data-path", default="dataset")
-    parser.add_argument("--output", default="calibration_results/ece_nll.json")
+    parser.add_argument("--output", default="calibration_results/ece.json")
     parser.add_argument("--bins", type=int, default=15)
     parser.add_argument("--batch-size", type=int, default=16384)
     return parser.parse_args()
@@ -229,8 +230,8 @@ def main():
             for row in config_rows:
                 print(
                     f"{row['checkpoint_name']}: "
-                    f"acc={row['acc']:.6f}, nll={row['nll']:.6f}, "
-                    f"ece={row['ece']:.6f}, ebops={row['ebops']:.0f}",
+                    f"acc={row['acc']:.6f}, ece={row['ece']:.6f}, "
+                    f"ebops={row['ebops']:.0f}",
                     flush=True,
                 )
             keras.backend.clear_session()

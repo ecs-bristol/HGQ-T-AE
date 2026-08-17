@@ -47,7 +47,7 @@ if __name__ == "__main__":
     np.random.seed(conf.seed)
     if "all" in args.run or "train" in args.run:
         print("Phase: train_hgq")
-        _ = train_hgq(
+        model_hgq, _ = train_hgq(
             model_hgq,
             X_train,
             y_train,
