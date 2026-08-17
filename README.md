@@ -2,8 +2,8 @@
 
 This artifact extends the open-source JEDI-linear repository under the Apache
 License, Version 2.0. The JEDI-linear components originate from that repository,
-and their original copyright and licensing information is retained in
-`LICENSE`. 
+their original copyright attribution is retained in `NOTICE`, and the software
+remains licensed under Apache License, Version 2.0, as provided in `LICENSE`.
 
 Install environment
 
