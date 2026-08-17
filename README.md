@@ -168,17 +168,6 @@ for p in *-feature*; do
 done
 ```
 
-# Citation
-
-```{=latex}
- @inproceedings{jedi-linear,
-  title={JEDI-linear: Fast and Efficient Graph Neural Networks for Jet Tagging on FPGAs},
-  author={Que, Zhiqiang and Sun, Chang and Paramesvaran, Sudarshan and Clement, Emyr and Karakoulaki, Katerina and Brown, Christopher and Laatu, Lauri and Cox, Arianna and Tapper, Alexander and Luk, Wayne and Spiropulu, Maria},
-  booktitle={2025 International Conference on Field Programmable Technology (FPT)},
-  year={2025},
-  organization={IEEE}
-}
-```
 
 
 # JEDI-linear - General Instructions
