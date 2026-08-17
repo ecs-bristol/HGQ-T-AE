@@ -1,5 +1,11 @@
 # Reproduction Instructions
 
+This artifact extends the open-source JEDI-linear repository under the Apache
+License, Version 2.0. The JEDI-linear components originate from that repository,
+and their original copyright and licensing information is retained in
+`LICENSE`. The upstream URL is omitted from this review copy to preserve
+double-blind anonymity.
+
 Install environment
 
 ```bash
@@ -167,30 +173,3 @@ for p in *-feature*; do
     done
 done
 ```
-
-
-
-# JEDI-linear - General Instructions
-
-
-This repository contains the code for the paper "JEDI-linear: Fast and Efficient Graph Neural Networks for Jet Tagging on FPGAs" (https://arxiv.org/abs/2508.15468). The code can be run as follows:
-
-1. Clone the repository, install the dependencies. Also install one of the backends for training (`jax`, `tensorflow`, or `pytorch`)
-   ```bash
-   pip install -r requirements.txt
-   pip install <your_backend>
-   ```
-2. Download the dataset from https://zenodo.org/records/3602260
-3. Extract the training and testing (the validation split downloaded), prepare them with
-   ```bash
-   python prepare_dataset.py -i /tmp/<train/validation>/ -o /tmp/<train/test>.h5 -j <n_processes>
-   ```
-   Place both `train.h5` and `test.h5` in the same directory, e.g., `/tmp/jet_data/`.
-4. Modifying the configs to have the `datapath` point to the dataset directory, and change the output directory `save_path` if needed.
-5. Run the training script:
-   ```bash
-   KERAS_BACKEND=<YOUR_BACKEND> python jet_classifier -c <CONFIG_FILE> -r train test verilog
-   ```
-   where `<YOUR_BACKEND>` can be `jax`, `tensorflow`, or `torch` depending on the backend you installed.
-   The configs are located in `configs/`.
-   The `-n$number` part of the config file is the maximum number of particles to be used; `-3` means only `pt, eta, phi` are used, otherwise all 16 features are used; `uq1` means the network is uniformly quantized over the particle dimension and is permutation-invariant.
